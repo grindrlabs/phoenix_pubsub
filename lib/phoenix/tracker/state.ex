@@ -130,6 +130,15 @@ defmodule Phoenix.Tracker.State do
         [{{:"$1", :"$2"}}]}])
   end
 
+
+  @doc """
+  Returns all values, regardless of replica status
+  """
+  def all_values(table) do
+    :ets.tab2list(table)
+    |> Enum.map(fn {topic_info, meta, _} -> {topic_info, meta} end)
+  end
+
   defp not_in(_pos, []), do: []
   defp not_in(pos, replicas), do: [not: ors(pos, replicas)]
   defp ors(pos, [rep]), do: {:"==", pos, {rep}}

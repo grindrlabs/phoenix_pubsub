@@ -51,7 +51,17 @@ defmodule Phoenix.Tracker.Shard do
     |> State.get_by_topic(topic)
   end
   def dirty_list(shard_name, topic) do
+    # Why can we do this: because we assign the shard_name
+    # as the name of the shard's `values` table.
+    # This allows us to bypass GenServer calls to get
+    # access to this table.
     State.tracked_values(shard_name, topic, [])
+  end
+
+  @spec dirty_list_all(atom) :: presence
+  def dirty_list_all(shard_name) do
+    # See &dirty_list/2, above
+    State.all_values(shard_name)
   end
 
   @spec graceful_permdown(pid) :: :ok

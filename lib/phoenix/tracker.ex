@@ -226,13 +226,43 @@ defmodule Phoenix.Tracker do
 
   ## Examples
 
-      iex> Phoenix.Tracker.list(MyTracker, "lobby")
+      iex> Phoenix.Tracker.dirty_list(MyTracker, "lobby")
       [{123, %{name: "user 123"}}, {456, %{name: "user 456"}}]
   """
   @spec dirty_list(atom, topic) :: [presence]
   def dirty_list(tracker_name, topic) do
     Shard.name_for_topic(tracker_name, topic, pool_size(tracker_name))
     |> Shard.dirty_list(topic)
+  end
+
+  @doc """
+  Lists all presences tracked by all topics, by directly consulting
+  all underlying ets tables.
+
+  This function has the same consistency guarantees as
+  `dirty_list/2`, above.
+
+    * `server_name` - The registered name of the tracker server
+
+  Returns tracked data as a list of lists of
+  `{{topic,pid,id}, metadata}` pairs.
+
+  ## Examples
+
+      iex> Phoenix.Tracker.dirty_list_all(MyTracker)
+      [[{{"topic_1", #PID<0.5133.0>, "me"},
+         %{a: "b", phx_ref: "RzeuUpDMous="}}],
+       [{{"topic_2", #PID<0.5133.0>, "me"},
+          %{a: "b", phx_ref: "5Qo5KyoNOl0="} }]]
+
+  """
+
+  @spec dirty_list_all(atom) :: [[presence]]
+  def dirty_list_all(tracker_name) do
+    for shard_number <- 0..(pool_size(tracker_name)-1) do
+      Shard.name_for_number(tracker_name, shard_number)
+      |> Shard.dirty_list_all()
+    end
   end
 
   @doc """

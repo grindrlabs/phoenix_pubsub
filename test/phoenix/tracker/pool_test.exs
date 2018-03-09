@@ -128,6 +128,21 @@ defmodule Phoenix.Tracker.PoolTest do
       for t <- topics, do: assert Tracker.list(server, t) == []
     end
 
+    @tag pool_size: n
+    test "pool #{n}: dirty_list_all() dumps state of all shards",
+    %{server: server, pool_size: n} do
+      topics = for i <- 1..100, do: "topic_#{i}"
+      self = self()
+      for t <- topics do
+        {:ok, _ref} = Tracker.track(server, self, t, "me", %{a: "b"})
+      end
+      list_of_lists = Tracker.dirty_list_all(server)
+      assert Enum.count(list_of_lists) == n
+      assert Enum.concat(list_of_lists) |> Enum.count() == 100
+      assert {{_topic, ^self, "me"},
+              %{a: "b", phx_ref: _}} = Enum.concat(list_of_lists) |> hd()
+    end
+
   end
 
 end
